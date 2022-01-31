@@ -37,13 +37,14 @@ bool IsPrivilegeEnabled(const ::LPCWSTR privilege)
     if (::HANDLE process = ::GetCurrentProcess(); ::OpenProcessToken(process, TOKEN_QUERY, &token) != 0) {
         ::LUID luid = {0};
         if (::LookupPrivilegeValueW(nullptr, (::LPCWSTR) privilege, &luid) != 0) {
-            ::PRIVILEGE_SET privs = {
+            ::PRIVILEGE_SET privs = (::PRIVILEGE_SET) {
                 .PrivilegeCount = 1,
-                .Control = PRIVILEGE_SET_ALL_NECESSARY,
-                .Privilege[0] = {
-                    .Luid = luid,
-                    .Attributes = SE_PRIVILEGE_ENABLED
-                }
+                .Control = PRIVILEGE_SET_ALL_NECESSARY
+            };
+            
+            privs.Privilege[0] = (::LUID_AND_ATTRIBUTES) {
+                .Luid = luid,
+                .Attributes = SE_PRIVILEGE_ENABLED
             };
             
             if (::BOOL result = FALSE; ::PrivilegeCheck(token, &privs, &result) != 0) {
